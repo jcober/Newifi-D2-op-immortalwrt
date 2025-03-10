@@ -77,9 +77,9 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
-    - name: Clone other packages
-      run: |
-        git clone --depth 1 -b master --single-branch https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
+    # - name: Clone other packages
+    #   run: |
+    #     git clone --depth 1 -b master --single-branch https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
         
     # - name: Import external feeds - openclash
     #   working-directory: ./openwrt
