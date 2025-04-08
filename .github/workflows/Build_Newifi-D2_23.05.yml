@@ -74,9 +74,9 @@ jobs:
       run: |
         # add feed
         curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
-    # - name: Clone other packages
-    #   run: |
-    #     git clone --depth 1 -b master --single-branch https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
+    - name: Clone other packages
+      run: |
+        git clone --depth 1 -b master --single-branch https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
         
     # - name: Import external feeds - openclash
     #   working-directory: ./openwrt
@@ -86,7 +86,7 @@ jobs:
     - name: Import external feeds - JerryKuKu Argon
       working-directory: ./openwrt
       run: |
-        git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku
+        git clone https://github.com/jerrykuku/luci-theme-argon.git
 
     - name: Configuration Customization 
       env:
