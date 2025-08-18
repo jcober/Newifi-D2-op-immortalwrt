@@ -81,8 +81,9 @@ jobs:
     #删除package/network/utils/fullconenat-nft，immortalwrt自带一个nft-fullcone与turboacc冲突
 
     - name: Clone other packages
+      working-directory: ./openwrt
       run: |
-        git clone --depth 1 -b master --single-branch https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
+        git clone https://github.com/vernesong/OpenClash.git package/luci-app-openclash
     #- name: Import external feeds - passwall
     #  working-directory: ./openwrt
     #  run: |
@@ -92,11 +93,11 @@ jobs:
     - name: Import external feeds - JerryKuKu Argon
       working-directory: ./openwrt
       run: |
-        git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku
+        git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon-jerrykuku
 
     - name: Configuration Customization 
       env:
-        CONFIG_FILE: '.config24.10-homeproxy'
+        CONFIG_FILE: '.config24.10'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
