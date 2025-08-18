@@ -83,7 +83,7 @@ jobs:
     - name: Clone other packages
       working-directory: ./openwrt
       run: |
-        git clone https://github.com/vernesong/OpenClash.git package
+        git clone https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
     #- name: Import external feeds - passwall
     #  working-directory: ./openwrt
     #  run: |
@@ -93,7 +93,7 @@ jobs:
     - name: Import external feeds - JerryKuKu Argon
       working-directory: ./openwrt
       run: |
-        git clone https://github.com/jerrykuku/luci-theme-argon.git package
+        git clone https://github.com/jerrykuku/luci-theme-argon.git
 
     - name: Configuration Customization 
       env:
