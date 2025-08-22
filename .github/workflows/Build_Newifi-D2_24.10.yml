@@ -76,14 +76,14 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         ./scripts/feeds install -a
-        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
+        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
         rm -rf package/network/utils/fullconenat-nft
     #删除package/network/utils/fullconenat-nft，immortalwrt自带一个nft-fullcone与turboacc冲突
 
-    - name: Clone other packages
-      working-directory: ./openwrt
-      run: |
-        git clone https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
+    #- name: Clone other packages
+    #  working-directory: ./openwrt
+    #  run: |
+    #   git clone https://github.com/vernesong/OpenClash.git && mv OpenClash/luci-app-openclash openwrt/package/luci-app-openclash
     #- name: Import external feeds - passwall
     #  working-directory: ./openwrt
     #  run: |
@@ -97,7 +97,7 @@ jobs:
 
     - name: Configuration Customization 
       env:
-        CONFIG_FILE: '.config24.10'
+        CONFIG_FILE: '.config'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
