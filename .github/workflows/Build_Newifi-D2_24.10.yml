@@ -76,8 +76,8 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         ./scripts/feeds install -a
-        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
-        rm -rf package/network/utils/fullconenat-nft
+        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
+    #   rm -rf package/network/utils/fullconenat-nft
     #删除package/network/utils/fullconenat-nft，immortalwrt自带一个nft-fullcone与turboacc冲突
 
     #- name: Clone other packages
@@ -97,7 +97,7 @@ jobs:
 
     - name: Configuration Customization 
       env:
-        CONFIG_FILE: '.config'
+        CONFIG_FILE: '.config24.10'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
