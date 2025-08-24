@@ -93,7 +93,7 @@ jobs:
 
     - name: Configuration Customization 
       env:
-        CONFIG_FILE: '.config24.10'
+        CONFIG_FILE: '.config24'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
