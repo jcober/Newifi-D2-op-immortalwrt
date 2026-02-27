@@ -1,0 +1,88 @@
+name: Build_Newifi-D2_24.10_Pro
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        # 释放 GitHub Runner 空间
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php
+        sudo -E apt-get -qq update
+        sudo -E apt-get -y -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+
+    - name: Clone source code
+      env: 
+        REPO_URL: https://github.com/immortalwrt/immortalwrt
+        REPO_BRANCH: openwrt-24.10
+      run: |
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: openwrt/staging_dir/host
+        key: ${{ runner.os }}-openwrt-cache-${{ hashFiles('openwrt/feeds.conf.default') }}
+
+    - name: Update & Install feeds
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        # 引入必要的额外插件包
+        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
+        # 彻底解决与 24.10 内置 nft-fullcone 的编译冲突
+        rm -rf package/network/utils/fullconenat-nft
+
+    - name: Configuration Customization & Optimization
+      env:
+        # 自动识别你上传的配置文件名
+        CONFIG_FILE: '.config24' 
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        cd openwrt
+        
+        # --- 指令集优化：针对 MT7621 加速 ---
+        sed -i 's/CONFIG_TARGET_OPTIMIZATION=.*/CONFIG_TARGET_OPTIMIZATION="-Os -pipe -march=mips32r2 -mtune=24kc"/' .config
+        
+        # --- 极致瘦身：开启 UPX 压缩适配 32MB ---
+        echo "CONFIG_TARGET_UBIFS_UPX=y" >> .config
+        echo "CONFIG_TARGET_SQUASHFS_UPX=y" >> .config
+        echo "CONFIG_STRIP_KERNEL_EXPORTS=y" >> .config
+        
+        # --- 语言包强制清理 (仅保留中文) ---
+        sed -i '/CONFIG_LUCI_LANG_/d' .config
+        echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
+        
+        make defconfig
+        
+    - name: Download package
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Build firmware
+      working-directory: ./openwrt
+      run: |
+        echo -e "$(nproc) thread build."
+        make -j$(nproc) V=s || make -j1 V=s
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: Newifi-D2-Pro-Optimized${{ env.FILE_DATE }}
+        path: openwrt/bin/targets/ramips/mt7621/*.bin
