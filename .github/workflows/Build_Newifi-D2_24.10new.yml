@@ -45,23 +45,50 @@ jobs:
         # 移除冲突项
         rm -rf package/network/utils/fullconenat-nft
 
+
     - name: Configuration Customization 
       env:
-        CONFIG_FILE: '.config24'
+        CONFIG_FILE: 'config24.txt'
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
-        # --- 针对 Newifi D2 的核心优化 ---
+        
+        # 1. 核心型号锁定
         echo "CONFIG_TARGET_ramips=y" >> .config
         echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
         echo "CONFIG_TARGET_ramips_mt7621_DEVICE_d-team_newifi-d2=y" >> .config
-        # 开启自动更新插件，方便后续修复漏洞
+
+        # 2. 【核心修改】添加 Passwall 但剔除内置内核
+        echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-passwall_Iptables_Transparent_Proxy=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y" >> .config
+        # 强制设为 n，不让内核塞进固件
+        echo "CONFIG_PACKAGE_xray-core=n" >> .config
+        echo "CONFIG_PACKAGE_v2ray-core=n" >> .config
+        echo "CONFIG_PACKAGE_v2ray-geodata=n" >> .config
+        echo "CONFIG_PACKAGE_luci-app-openclash=n" >> .config
+
+        # 3. 【基建】内置 U 盘扩容必备驱动 (Extroot 必须项)
+        echo "CONFIG_PACKAGE_block-mount=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-fs-ext4=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
+        echo "CONFIG_PACKAGE_e2fsprogs=y" >> .config
+
+        # 4. 【系统优化】使用 WolfSSL 替代 OpenSSL (节省大量空间)
+        echo "CONFIG_PACKAGE_libopenssl=n" >> .config
+        echo "CONFIG_PACKAGE_libustream-wolfssl=y" >> .config
+
+        # 5. 【补丁】自动更新与高性能无线
         echo "CONFIG_PACKAGE_luci-app-attendedsysupgrade=y" >> .config
-        # 启用高性能无线驱动
         echo "CONFIG_PACKAGE_kmod-mt7603=y" >> .config
         echo "CONFIG_PACKAGE_kmod-mt76x2=y" >> .config
-        # 强制压缩固件体积，防止无法启动
+
+        # 6. 【极致压缩】
         echo "CONFIG_STRIP_KERNEL_EXPORTS=y" >> .config
+        echo "CONFIG_USE_UPX=y" >> .config
+        echo "CONFIG_TARGET_SQUASHFS_BLOCK_SIZE=1024" >> .config
+
         make defconfig
         
     - name: Download package
