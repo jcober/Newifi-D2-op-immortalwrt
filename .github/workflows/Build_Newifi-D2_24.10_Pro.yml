@@ -48,7 +48,7 @@ jobs:
     - name: Configuration Customization & Optimization
       env:
         # 自动识别你上传的配置文件名
-        CONFIG_FILE: '.config24' 
+        CONFIG_FILE: '.config25' 
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
@@ -85,4 +85,5 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: Newifi-D2-Pro-Optimized${{ env.FILE_DATE }}
+
         path: openwrt/bin/targets/ramips/mt7621/*.bin
