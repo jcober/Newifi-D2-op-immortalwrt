@@ -1,0 +1,84 @@
+#=================================================
+# Description: Build ImmortalWrt for Newifi D2 (Optimized 2026)
+# Target: MT7621 / Newifi-D2
+#=================================================
+
+name: Build_Newifi-D2_24.10
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04 # 2026年建议使用更稳定的长期支持环境
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq full-upgrade
+        sudo -E apt-get -y -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+
+    - name: Clone source code
+      env: 
+        REPO_URL: https://github.com/immortalwrt/immortalwrt
+        # 若想严格锁定版本，请将下行改为 REPO_BRANCH: v24.10.5
+        REPO_BRANCH: openwrt-24.10
+      run: |
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+    - name: Update & Install feeds
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        # 集成 TurboACC (2026最新版)
+        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
+        # 移除冲突项
+        rm -rf package/network/utils/fullconenat-nft
+
+    - name: Configuration Customization 
+      env:
+        CONFIG_FILE: '.config24'
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        cd openwrt
+        # --- 针对 Newifi D2 的核心优化 ---
+        echo "CONFIG_TARGET_ramips=y" >> .config
+        echo "CONFIG_TARGET_ramips_mt7621=y" >> .config
+        echo "CONFIG_TARGET_ramips_mt7621_DEVICE_d-team_newifi-d2=y" >> .config
+        # 开启自动更新插件，方便后续修复漏洞
+        echo "CONFIG_PACKAGE_luci-app-attendedsysupgrade=y" >> .config
+        # 启用高性能无线驱动
+        echo "CONFIG_PACKAGE_kmod-mt7603=y" >> .config
+        echo "CONFIG_PACKAGE_kmod-mt76x2=y" >> .config
+        # 强制压缩固件体积，防止无法启动
+        echo "CONFIG_STRIP_KERNEL_EXPORTS=y" >> .config
+        make defconfig
+        
+    - name: Download package
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Build firmware
+      working-directory: ./openwrt
+      run: |
+        make -j$(nproc) V=s || make -j1 V=s
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ImmortalWrt_Newifi-D2_24.10${{ env.FILE_DATE }}
+        path: openwrt/bin/targets/ramips/mt7621/*.bin
