@@ -3,7 +3,7 @@
 # Target: MT7621 / Newifi-D2
 #=================================================
 
-name: Build_Newifi-D2_24.10
+name: Build_Newifi-D2_24.10new
 
 on:
   workflow_dispatch:
