@@ -45,6 +45,13 @@ jobs:
         # 彻底解决与 24.10 内置 nft-fullcone 的编译冲突
         rm -rf package/network/utils/fullconenat-nft
 
+    - name: Fix Patch & Configuration
+      run: |
+        cd openwrt
+        # --- 解决你遇到的补丁冲突问题 ---
+        # 找到并删除报错的内核补丁，防止编译中断
+        find target/linux/generic/hack-6.6/ -name "952-add-net-conntrack-events-support-multiple-registrant.patch" -exec rm -f {} \;
+        
     - name: Configuration Customization & Optimization
       env:
         # 自动识别你上传的配置文件名
