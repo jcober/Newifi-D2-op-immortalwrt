@@ -41,9 +41,10 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         # 引入必要的额外插件包
-        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
+        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
+
         # 彻底解决与 24.10 内置 nft-fullcone 的编译冲突
-        rm -rf package/network/utils/fullconenat-nft
+        # rm -rf package/network/utils/fullconenat-nft
 
     - name: Fix Patch & Configuration
       run: |
@@ -51,7 +52,10 @@ jobs:
         # --- 解决你遇到的补丁冲突问题 ---
         # 找到并删除报错的内核补丁，防止编译中断
         find target/linux/generic/hack-6.6/ -name "952-add-net-conntrack-events-support-multiple-registrant.patch" -exec rm -f {} \;
-        
+        # 2. 删除导致 nf_conntrack_ecache 报错的补丁 (这是你本次报错的根源)
+        # 通常这些补丁文件名包含 "conntrack" 或 "ecache"
+        find target/linux/generic/hack-6.6/ -name "*conntrack-events*" -exec rm -f {} \;
+        find target/linux/generic/hack-6.6/ -name "*ecache*" -exec rm -f {} \;
     - name: Configuration Customization & Optimization
       env:
         # 自动识别你上传的配置文件名
