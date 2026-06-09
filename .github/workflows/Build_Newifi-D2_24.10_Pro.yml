@@ -57,12 +57,7 @@ jobs:
         
         # --- 指令集优化：针对 MT7621 加速 ---
         sed -i 's/CONFIG_TARGET_OPTIMIZATION=.*/CONFIG_TARGET_OPTIMIZATION="-Os -pipe -march=mips32r2 -mtune=24kc"/' .config
-        
-        # --- 极致瘦身：开启 UPX 压缩适配 32MB ---
-        echo "CONFIG_TARGET_UBIFS_UPX=y" >> .config
-        echo "CONFIG_TARGET_SQUASHFS_UPX=y" >> .config
-        echo "CONFIG_STRIP_KERNEL_EXPORTS=y" >> .config
-        
+      
         # --- 语言包强制清理 (仅保留中文) ---
         sed -i '/CONFIG_LUCI_LANG_/d' .config
         echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
