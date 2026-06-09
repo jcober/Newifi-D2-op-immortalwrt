@@ -42,12 +42,6 @@ jobs:
       run: |
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-       
-        # 引入必要的额外插件包
-        curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
-
-        # 彻底解决与 24.10 内置 nft-fullcone 的编译冲突
-        # rm -rf package/network/utils/fullconenat-nft 
         
     - name: Configuration Customization & Optimization
       env:
